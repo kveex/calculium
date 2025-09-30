@@ -81,6 +81,7 @@ class TangentSolver(Solver):
         self.min_max_values = start_end
         self.accuracy = round(accuracy, 6)
         self.n_digits = count_decimals_from_float(self.accuracy)
+        self.current_x = self.min_max_values[0]
         self.func_x = lambdify("x", self.user_input)
         self.func_xx = lambdify("x", diff(self.user_input, 'x'))
         self.func_xxx = lambdify("x", diff(self.user_input, 'x', 2))
@@ -93,23 +94,42 @@ class TangentSolver(Solver):
             self.previous_x = self.current_x
             self.current_x = self.current_x - (self.f_x / self.f_xx)
 
+    def check_func(self) -> bool:
+        found = False
+        bl = self.func_x(self.current_x) < 0 and self.func_xxx(self.current_x) < 0
+        bl2 = self.func_x(self.current_x) > 0 and self.func_xxx(self.current_x) > 0
+        self.func_xx(self.current_x)
+        if bl or bl2:
+            found = True
+        elif self.current_x > self.min_max_values[1]*2:
+            print("Too many iterations")
+            raise StopIteration
+        else:
+            self.current_x += self.accuracy
+        return found
+
     def compute(self):
-        found: bool = False
-        a = self.min_max_values[0]
-        b = self.min_max_values[1]
-        self.current_x = a
+        found = False
         while not found:
-            bl = self.func_x(self.current_x) < 0 and self.func_xxx(self.current_x) < 0
-            bl2 = self.func_x(self.current_x) > 0 and self.func_xxx(self.current_x) > 0
-            self.func_xx(self.current_x)
-            if bl or bl2:
-                found = True
-            elif self.current_x > b*2:
-                print("Too many iterations")
-                raise StopIteration
-            else:
-                self.current_x += self.accuracy
+            found = self.check_func()
         return self.current_x, self.n_digits
+
+class CombinedSolver(ChordSolver, TangentSolver):
+    def __init__(self):
+        super().__init__()
+
+    def give_info(self, inp, start_end, accuracy):
+        super().give_info(inp, start_end, accuracy)
+
+    def compute(self):
+        self.check_func()
+        x1 = self.get_x()
+        while not super().compare_by_round():
+            x1 = self.get_x()
+            x2 = self.func_x(self.current_x)
+            print(x1, x2)
+        return x1, self.n_digits
 
 chord_solver = ChordSolver()
 tangent_solver = TangentSolver()
+combined_selver = CombinedSolver()

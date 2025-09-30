@@ -1,10 +1,10 @@
 import dearpygui.dearpygui as dpg
 import re
 from sympy import sympify, SympifyError
-from main import chord_solver, tangent_solver
+from main import chord_solver, tangent_solver, combined_selver
 
 ALLOWED_PATTERN = re.compile(r"^[0-9x+\-*/^ ]*$")
-methods = ("Chord", "Tangent")
+methods = ("Chord", "Tangent", "Combined")
 
 dpg.create_context()
 
@@ -22,9 +22,12 @@ def button_callback():
     if combo_option == methods[0]:
         chord_solver.give_info(user_input, start_end, accuracy)
         final_x, n_digits = chord_solver.compute()
-    else:
+    elif combo_option == methods[1]:
         tangent_solver.give_info(user_input, start_end, accuracy)
         final_x, n_digits =  tangent_solver.compute()
+    else:
+        combined_selver.give_info(user_input, start_end, accuracy)
+        final_x, n_digits = combined_selver.compute()
     dpg.set_value("result", f"X = {final_x:.{n_digits}f}")
 def validate_text_input(sender):
     text = dpg.get_value(sender)
